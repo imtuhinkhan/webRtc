@@ -1,0 +1,21 @@
+.chatBox{
+    border:1px solid #e91e63;
+    min-height: 645px;
+    margin-top: 10px;
+    border-radius: 5px;
+
+}
+
+.msgBox{
+    width: 90%;
+    margin: 0 auto 20px auto;
+    position: absolute;
+    bottom: 0px;
+}
+
+#conSts{
+    text-align: center;
+    margin: 13px;
+    font-size: 20px;
+    color: green;
+}

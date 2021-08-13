@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>WebRtc Practice</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-danger">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <video id="userVdo" style="display:block;margin: 0 auto;" width="600" height="400" poster="images/bg.jpg"></video>
+                <video id="myVdo" style="width:100px;display:block;margin: 0 auto;position: absolute; top: 31px;left: 90px;"></video>
+                <h3 id="pid" class="alert alert-info" style="text-align: center;width: 90%; margin: 0 auto; margin-top: 10px;"></h3>
+                <div class="input-group" id="idInputBox" style="width: 90%;margin: 0 auto; margin-top:20px">
+                    <input type="text" id="userId" class="form-control" aria-label="Text input with segmented button dropdown" placeholder="Enter Peer ID">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-primary connect" >Connect</button>
+                    </div>
+                </div>
+                <p id="conSts"></p>
+
+            </div>
+            <div class="col-md-4 chatBox">
+                <div class="input-group msgBox" style="width: 90%;">
+                    <div class="msg">
+
+                    </div>
+                    <input type="text" id="sendTxt" class="form-control" aria-label="Text input with segmented button dropdown" placeholder="Type Here">
+                    <div class="input-group-btn">
+                        <button  id="sendMsg" type="button" class="btn btn-primary">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="js/jquery-3.6.0.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/peerjs.min.js"></script>
+<script>
+    let peer = new Peer();
+    peer.on('open', function(id) {
+        let pid =document.getElementById('pid').innerHTML="My ID: "+id
+    });
+
+    peer.on('call', function(call) {
+        // Answer the call, providing our mediaStream
+        call.on('stream', function(stream) {
+            let video =document.getElementById('userVdo')
+            video.srcObject=stream
+            video.play()
+        });
+    });
+
+    let constraints = {'audio':true,'video':true}
+
+    $(".connect").click(function(){
+        console.log(123)
+        let userID = $('#userId').val()
+        let conn = peer.connect(userID);
+        conn.on('open', function() {
+            $('#conSts').html('Connected')
+            $('#idInputBox').css("display","none")
+        });
+        navigator.mediaDevices.getUserMedia(constraints).then((stream)=>{
+            let video =document.getElementById('myVdo')
+            video.srcObject=stream
+            video.play()
+            let call = peer.call(userId, stream);
+            console.log(call)
+        }).catch(err=>{
+            console.log(err)
+        })
+
+
+    });
+
+    $("#sendMsg").click(function(){
+        console.log(123)
+        let userID = $('#userId').val()
+        let msg = $('#sendTxt').val()
+        let conn = peer.connect(userID);
+        conn.on('open', function() {
+            conn.send(msg)
+            let msgFormat = "<p style='color: #2b542c;float: right'>You:"+msg+"</p><br>"
+            $('.msg').append(msgFormat)
+            $('#sendTxt').val('')
+
+        });
+    });
+
+    receivedMsg()
+
+    function  receivedMsg(){
+        peer.on('connection', function(conn) {
+            conn.on('data',function (msg){
+                let msgFormat = "<p style='color: #2e6da4;float: left'>User: "+msg+"</p><br>"
+                $('.msg').append(msgFormat)
+            })
+        })
+    }
+</script>
+</html>
