@@ -23,7 +23,11 @@
                     </div>
                 </div>
                 <p id="conSts"></p>
-
+                <div id="btnBlock" style="text-align: center;display: none">
+                    <button class="btn btn-primary" id="receiveCall">Make Call</button>
+                    <button class="btn btn-success" id="makeCall">Receive Call</button>
+                    <button class="btn btn-danger" id="declineCall">Decline Call</button>
+                </div>
             </div>
             <div class="col-md-4 chatBox">
                 <div class="input-group msgBox" style="width: 90%;">
@@ -44,42 +48,80 @@
 <script src="js/peerjs.min.js"></script>
 <script>
     let peer = new Peer();
+
+    //creat peer ID
     peer.on('open', function(id) {
         let pid =document.getElementById('pid').innerHTML="My ID: "+id
     });
 
-    peer.on('call', function(call) {
-        // Answer the call, providing our mediaStream
-        call.on('stream', function(stream) {
-            let video =document.getElementById('userVdo')
-            video.srcObject=stream
-            video.play()
-        });
-    });
 
     let constraints = {'audio':true,'video':true}
 
+    //Build Connection
     $(".connect").click(function(){
-        console.log(123)
         let userID = $('#userId').val()
         let conn = peer.connect(userID);
         conn.on('open', function() {
             $('#conSts').html('Connected')
             $('#idInputBox').css("display","none")
+            $('#btnBlock').css("display","block")
+            receivedMsg()
         });
+    });
+
+
+    //make call
+    $("#makeCall").click(function(){
+        let userID = $('#userId').val()
         navigator.mediaDevices.getUserMedia(constraints).then((stream)=>{
+            //self video
             let video =document.getElementById('myVdo')
             video.srcObject=stream
             video.play()
-            let call = peer.call(userId, stream);
-            console.log(call)
-        }).catch(err=>{
-            console.log(err)
-        })
 
+            //initiate call
+            let call = peer.call(userID, stream);
+
+            //received and show user video
+            call.on('stream', function(remoteStream) {
+                let userVideo =document.getElementById('userVdo')
+                userVideo.srcObject=stream
+                userVideo.play()
+            })
+
+        }).catch(err=>{
+            alert('Please allow you camera and audio')
+        })
 
     });
 
+    // Received Call
+    $("#receiveCall").click(function(){
+       peer.on('call', function(call) {
+            console.log(54321)
+            navigator.mediaDevices.getUserMedia(constraints).then((stream)=>{
+                //self video
+                let video =document.getElementById('myVdo')
+                video.srcObject=stream
+                video.play()
+                call.answer(stream); //send stream to remote user
+
+                //received and show user video
+                call.on('stream', function(remoteStream) {
+                    let userVideo =document.getElementById('userVdo')
+                    userVideo.srcObject=remoteStream
+                    userVideo.play()
+                })
+            }).catch(err=>{
+                alert('Please allow you camera and audio')
+            })
+        });
+    });
+
+    $("#declineCall").click(function(){
+
+    });
+    //Realtime message
     $("#sendMsg").click(function(){
         console.log(123)
         let userID = $('#userId').val()
@@ -93,9 +135,7 @@
 
         });
     });
-
-    receivedMsg()
-
+    //received message
     function  receivedMsg(){
         peer.on('connection', function(conn) {
             conn.on('data',function (msg){
